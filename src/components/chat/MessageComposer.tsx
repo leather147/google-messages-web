@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useChatStore } from "@/store/useChatStore";
 import { sendMessage, simulateIncomingMessage } from "@/services/mockApi";
 import { idbPutMessages } from "@/lib/idb";
@@ -21,7 +21,13 @@ export function MessageComposer({ conversationId }: MessageComposerProps) {
 
   const appendMessage = useChatStore((s) => s.appendMessage);
   const setTyping = useChatStore((s) => s.setTyping);
-  const typingConversationIds = useChatStore((s) => s.typingConversationIds);
+  const replyingToId = useChatStore((s) => s.replyingTo[conversationId] ?? null);
+  const setReplyingTo = useChatStore((s) => s.setReplyingTo);
+  const messages = useChatStore((s) => s.messages[conversationId] ?? []);
+
+  const replyingToMessage: Message | null = replyingToId
+    ? (messages.find((m) => m.id === replyingToId) ?? null)
+    : null;
 
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -56,9 +62,12 @@ export function MessageComposer({ conversationId }: MessageComposerProps) {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
 
+    const currentReplyTo = replyingToId;
+
     setSending(true);
     setText("");
     setTyping(conversationId, false);
+    setReplyingTo(conversationId, null);
 
     // Reset textarea height
     if (textareaRef.current) {
@@ -75,13 +84,13 @@ export function MessageComposer({ conversationId }: MessageComposerProps) {
       status: "sent",
       reactions: [],
       isDeleted: false,
-      replyTo: null,
+      replyTo: currentReplyTo,
     };
 
     appendMessage(optimisticMsg);
 
     try {
-      const confirmedMsg = await sendMessage(conversationId, trimmed);
+      const confirmedMsg = await sendMessage(conversationId, trimmed, currentReplyTo);
       appendMessage(confirmedMsg);
       await idbPutMessages([confirmedMsg]);
 
@@ -111,79 +120,153 @@ export function MessageComposer({ conversationId }: MessageComposerProps) {
       e.preventDefault();
       send();
     }
+    // Escape clears reply
+    if (e.key === "Escape" && replyingToId) {
+      setReplyingTo(conversationId, null);
+    }
   }
 
   const canSend = text.trim().length > 0 && !sending;
 
   return (
     <div
-      className="flex items-end gap-2 px-3 py-2 shrink-0"
+      className="shrink-0"
       style={{
         background: "var(--md-sys-color-surface)",
         borderTop: "1px solid var(--md-sys-color-outline-variant)",
-        minHeight: 64,
       }}
     >
-      {/* Emoji button */}
-      <button
-        className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors self-end mb-0.5"
-        aria-label="Insert emoji"
-        style={{ color: "var(--md-sys-color-on-surface-variant)" }}
-      >
-        <span className="material-symbols-outlined" style={{ fontSize: 24 }} aria-hidden="true">
-          sentiment_satisfied
-        </span>
-      </button>
+      {/* Reply preview bar */}
+      <AnimatePresence>
+        {replyingToMessage && (
+          <motion.div
+            key="reply-bar"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden"
+          >
+            <div
+              className="flex items-center gap-3 px-4 py-2"
+              style={{
+                background: "var(--md-sys-color-surface-container-low)",
+                borderBottom: "1px solid var(--md-sys-color-outline-variant)",
+              }}
+            >
+              {/* Vertical accent bar */}
+              <div
+                className="w-0.5 self-stretch rounded-full shrink-0"
+                style={{ background: "var(--md-sys-color-primary)", minHeight: 24 }}
+              />
+              <div className="flex-1 min-w-0">
+                <p
+                  className="font-medium truncate"
+                  style={{ fontSize: 12, color: "var(--md-sys-color-primary)" }}
+                >
+                  {replyingToMessage.direction === "outgoing" ? "You" : "Them"}
+                </p>
+                <p
+                  className="truncate"
+                  style={{
+                    fontSize: 13,
+                    color: "var(--md-sys-color-on-surface-variant)",
+                  }}
+                >
+                  {replyingToMessage.text}
+                </p>
+              </div>
+              {/* Dismiss */}
+              <button
+                className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors"
+                onClick={() => setReplyingTo(conversationId, null)}
+                aria-label="Cancel reply"
+                style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: 18 }}
+                  aria-hidden="true"
+                >
+                  close
+                </span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Text input */}
-      <div
-        className="flex-1 flex items-end rounded-3xl px-4 py-2"
-        style={{
-          background: "var(--md-sys-color-surface-container-high)",
-          minHeight: 44,
-        }}
-      >
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Message"
-          rows={1}
-          className="flex-1 bg-transparent resize-none outline-none leading-relaxed"
+      {/* Composer row */}
+      <div className="flex items-end gap-2 px-3 py-2" style={{ minHeight: 64 }}>
+        {/* Emoji button */}
+        <button
+          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors self-end mb-0.5"
+          aria-label="Insert emoji"
+          style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+        >
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: 24 }}
+            aria-hidden="true"
+          >
+            sentiment_satisfied
+          </span>
+        </button>
+
+        {/* Text input */}
+        <div
+          className="flex-1 flex items-end rounded-3xl px-4 py-2"
           style={{
-            color: "var(--md-sys-color-on-surface)",
-            fontSize: 15,
-            fontFamily: "inherit",
-            lineHeight: "1.5",
-            maxHeight: 120,
+            background: "var(--md-sys-color-surface-container-high)",
+            minHeight: 44,
           }}
-          aria-label="Type a message"
-          aria-multiline="true"
-        />
-      </div>
+        >
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Message"
+            rows={1}
+            className="flex-1 bg-transparent resize-none outline-none leading-relaxed"
+            style={{
+              color: "var(--md-sys-color-on-surface)",
+              fontSize: 15,
+              fontFamily: "inherit",
+              lineHeight: "1.5",
+              maxHeight: 120,
+            }}
+            aria-label="Type a message"
+            aria-multiline="true"
+          />
+        </div>
 
-      {/* Send / Mic button */}
-      <motion.button
-        className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 self-end mb-0.5 transition-colors"
-        style={{
-          background: canSend
-            ? "var(--md-sys-color-primary)"
-            : "transparent",
-          color: canSend
-            ? "var(--md-sys-color-on-primary)"
-            : "var(--md-sys-color-on-surface-variant)",
-        }}
-        onClick={send}
-        animate={{ scale: canSend ? 1 : 0.95 }}
-        transition={{ type: "spring", stiffness: 400, damping: 20 }}
-        aria-label={canSend ? "Send message" : "Voice message"}
-        disabled={sending}
-      >
-        <span className="material-symbols-outlined" style={{ fontSize: 22 }} aria-hidden="true">
-          {canSend ? "send" : "mic"}
-        </span>
-      </motion.button>
+        {/* Send / Mic button */}
+        <motion.button
+          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 self-end mb-0.5 transition-colors"
+          style={{
+            background: canSend
+              ? "var(--md-sys-color-primary)"
+              : "transparent",
+            color: canSend
+              ? "var(--md-sys-color-on-primary)"
+              : "var(--md-sys-color-on-surface-variant)",
+          }}
+          onClick={send}
+          animate={{ scale: canSend ? 1 : 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          aria-label={canSend ? "Send message" : "Voice message"}
+          disabled={sending}
+        >
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: 22 }}
+            aria-hidden="true"
+          >
+            {canSend ? "send" : "mic"}
+          </span>
+        </motion.button>
+      </div>
     </div>
   );
 }

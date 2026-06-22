@@ -12,6 +12,8 @@ import { ContextMenu } from "./ContextMenu";
 import { ReactionPicker } from "./ReactionPicker";
 import type { Message } from "@/types/global";
 
+const EMPTY_MESSAGES: Message[] = [];
+
 interface ChatWindowProps {
   conversationId: string;
 }
@@ -19,7 +21,8 @@ interface ChatWindowProps {
 export function ChatWindow({ conversationId }: ChatWindowProps) {
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId);
   const setSidebarOpen = useChatStore((s) => s.setSidebarOpen);
-  const messages = useChatStore((s) => s.messages[conversationId] ?? []);
+  const setReplyingTo = useChatStore((s) => s.setReplyingTo);
+  const messages = useChatStore((s) => s.messages[conversationId] ?? EMPTY_MESSAGES);
 
   const [contextMenu, setContextMenu] = useState<{
     messageId: string;
@@ -53,13 +56,11 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
     setContextMenu({ messageId, position: { x: e.clientX, y: e.clientY } });
   }
 
-  function handleReactionClick(messageId: string) {
+  function handleReactionClick(messageId: string, e?: React.MouseEvent) {
     setContextMenu(null);
-    // Position reaction picker near the top of the screen (approximate)
-    setReactionPicker({
-      messageId,
-      position: { x: window.innerWidth / 2, y: 120 },
-    });
+    const x = e ? e.clientX : window.innerWidth / 2;
+    const y = e ? Math.max(e.clientY - 56, 80) : 120;
+    setReactionPicker({ messageId, position: { x, y } });
   }
 
   return (
@@ -174,6 +175,10 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
             onReact={(id) => {
               setContextMenu(null);
               setReactionPicker({ messageId: id, position: contextMenu.position });
+            }}
+            onReply={(id) => {
+              setReplyingTo(conversationId, id);
+              setContextMenu(null);
             }}
           />
         )}

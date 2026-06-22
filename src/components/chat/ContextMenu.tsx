@@ -12,9 +12,10 @@ interface ContextMenuProps {
   position: { x: number; y: number };
   onClose: () => void;
   onReact: (messageId: string) => void;
+  onReply: (messageId: string) => void;
 }
 
-export function ContextMenu({ message, position, onClose, onReact }: ContextMenuProps) {
+export function ContextMenu({ message, position, onClose, onReact, onReply }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const patchMessage = useChatStore((s) => s.patchMessage);
@@ -70,7 +71,10 @@ export function ContextMenu({ message, position, onClose, onReact }: ContextMenu
     {
       icon: "reply",
       label: "Reply",
-      onClick: onClose,
+      onClick: () => {
+        onReply(message.id);
+        onClose();
+      },
     },
     {
       icon: "content_copy",

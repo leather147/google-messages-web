@@ -9,8 +9,9 @@ interface MessageBubbleProps {
   isGrouped: boolean; // same sender, within 3 min of previous
   isLastInGroup: boolean; // last in a consecutive run
   onContextMenu: (messageId: string, e: React.MouseEvent) => void;
-  onReactionClick: (messageId: string) => void;
+  onReactionClick: (messageId: string, e?: React.MouseEvent) => void;
   isOptimistic?: boolean;
+  replyToMessage?: Message | null;
 }
 
 const STATUS_ICONS: Record<string, string> = {
@@ -26,6 +27,7 @@ export function MessageBubble({
   onContextMenu,
   onReactionClick,
   isOptimistic = false,
+  replyToMessage,
 }: MessageBubbleProps) {
   const isOutgoing = message.direction === "outgoing";
 
@@ -86,7 +88,7 @@ export function MessageBubble({
         }}
       >
         <div
-          className="px-4 py-2 text-sm leading-relaxed break-words select-text"
+          className="text-sm leading-relaxed break-words select-text"
           style={{
             borderRadius,
             background: isOutgoing
@@ -99,9 +101,56 @@ export function MessageBubble({
             lineHeight: "1.5",
             wordBreak: "break-word",
             overflowWrap: "break-word",
+            overflow: "hidden",
           }}
         >
-          {message.text}
+          {/* Reply quote block */}
+          {replyToMessage && !replyToMessage.isDeleted && (
+            <div
+              className="flex items-stretch gap-2 px-3 pt-2 pb-1"
+              style={{
+                borderBottom: isOutgoing
+                  ? "1px solid rgba(255,255,255,0.2)"
+                  : "1px solid var(--md-sys-color-outline-variant)",
+              }}
+            >
+              <div
+                className="w-0.5 shrink-0 rounded-full"
+                style={{
+                  background: isOutgoing
+                    ? "rgba(255,255,255,0.6)"
+                    : "var(--md-sys-color-primary)",
+                  minHeight: 28,
+                }}
+              />
+              <div className="min-w-0 flex-1">
+                <p
+                  className="font-medium truncate"
+                  style={{
+                    fontSize: 11,
+                    color: isOutgoing
+                      ? "rgba(255,255,255,0.8)"
+                      : "var(--md-sys-color-primary)",
+                    marginBottom: 1,
+                  }}
+                >
+                  {replyToMessage.direction === "outgoing" ? "You" : "Them"}
+                </p>
+                <p
+                  className="truncate"
+                  style={{
+                    fontSize: 12,
+                    color: isOutgoing
+                      ? "rgba(255,255,255,0.75)"
+                      : "var(--md-sys-color-on-surface-variant)",
+                  }}
+                >
+                  {replyToMessage.text}
+                </p>
+              </div>
+            </div>
+          )}
+          <div className="px-4 py-2">{message.text}</div>
         </div>
 
         {/* Quick reaction hover button */}
@@ -121,7 +170,7 @@ export function MessageBubble({
             justifyContent: "center",
             cursor: "pointer",
           }}
-          onClick={() => onReactionClick(message.id)}
+          onClick={(e) => onReactionClick(message.id, e)}
           aria-label="Add reaction"
         >
           <span
@@ -147,7 +196,7 @@ export function MessageBubble({
                 fontSize: 12,
                 cursor: "pointer",
               }}
-              onClick={() => onReactionClick(message.id)}
+              onClick={(e) => onReactionClick(message.id, e)}
               aria-label={`${reaction.emoji} reaction, ${reaction.count}`}
             >
               <span>{reaction.emoji}</span>

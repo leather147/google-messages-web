@@ -69,6 +69,10 @@ interface ChatStore {
   composerDraft: Record<string, string>;
   setComposerDraft: (conversationId: string, text: string) => void;
 
+  // ── Reply-to ────────────────────────────────────────────────────────────
+  replyingTo: Record<string, string | null>;
+  setReplyingTo: (conversationId: string, messageId: string | null) => void;
+
   // ── Offline ─────────────────────────────────────────────────────────────
   isOffline: boolean;
   setIsOffline: (v: boolean) => void;
@@ -136,7 +140,7 @@ export const useChatStore = create<ChatStore>((set) => ({
   activeTab: "messages",
   setActiveTab: (activeTab) => set({ activeTab }),
 
-  // ── Theme ───────────────────────────────────────────────────────────────
+  // ── Theme ────────────────────────────���──────────────────────────────────
   theme: "system",
   setTheme: (theme) => {
     set({ theme });
@@ -178,6 +182,13 @@ export const useChatStore = create<ChatStore>((set) => ({
   setComposerDraft: (conversationId, text) =>
     set((s) => ({
       composerDraft: { ...s.composerDraft, [conversationId]: text },
+    })),
+
+  // ── Reply-to ────────────────────────────────────────────────────────────
+  replyingTo: {},
+  setReplyingTo: (conversationId, messageId) =>
+    set((s) => ({
+      replyingTo: { ...s.replyingTo, [conversationId]: messageId },
     })),
 
   // ── Offline ─────────────────────────────────────────────────────────────

@@ -3,8 +3,10 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useChatStore } from "@/store/useChatStore";
-import { apiAddReaction } from "@/services/mockApi";
+import { addReaction } from "@/services/mockApi";
+import type { Message } from "@/types/global";
 
+const EMPTY_MESSAGES: Message[] = [];
 const COMMON_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🎉", "🔥"];
 
 interface ReactionPickerProps {
@@ -21,8 +23,8 @@ export function ReactionPicker({
   onClose,
 }: ReactionPickerProps) {
   const pickerRef = useRef<HTMLDivElement>(null);
-  const updateMessage = useChatStore((s) => s.updateMessage);
-  const messages = useChatStore((s) => s.messages[conversationId] ?? []);
+  const patchMessage = useChatStore((s) => s.patchMessage);
+  const messages = useChatStore((s) => s.messages[conversationId] ?? EMPTY_MESSAGES);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -55,8 +57,8 @@ export function ReactionPicker({
           .map((r) => (r.emoji === emoji ? { ...r, count: r.count + 1 } : r))
       : [...msg.reactions, { emoji, count: 1 }];
 
-    updateMessage(messageId, conversationId, { reactions: newReactions });
-    await apiAddReaction(conversationId, messageId, emoji);
+    patchMessage(messageId, conversationId, { reactions: newReactions });
+    await addReaction(messageId, conversationId, emoji);
     onClose();
   }
 

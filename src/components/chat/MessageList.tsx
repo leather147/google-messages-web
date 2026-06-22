@@ -16,7 +16,7 @@ import type { Message } from "@/types/global";
 interface MessageListProps {
   conversationId: string;
   onContextMenu: (messageId: string, e: React.MouseEvent) => void;
-  onReactionClick: (messageId: string) => void;
+  onReactionClick: (messageId: string, e?: React.MouseEvent) => void;
 }
 
 export function MessageList({
@@ -121,9 +121,9 @@ export function MessageList({
   if (isLoading) return <MessageListSkeleton />;
 
   // Group messages by date key and compute grouping
-  type RenderedItem =
+          type RenderedItem =
     | { type: "separator"; key: string; isoDate: string }
-    | { type: "message"; key: string; message: Message; isGrouped: boolean; isLastInGroup: boolean };
+    | { type: "message"; key: string; message: Message; isGrouped: boolean; isLastInGroup: boolean; replyToMessage: Message | null };
 
   const items: RenderedItem[] = [];
   let lastDateKey = "";
@@ -145,12 +145,17 @@ export function MessageList({
       msg
     );
 
+    const replyToMessage = msg.replyTo
+      ? allMessages.find((m) => m.id === msg.replyTo) ?? null
+      : null;
+
     items.push({
       type: "message",
       key: msg.id,
       message: msg,
       isGrouped,
       isLastInGroup,
+      replyToMessage,
     });
   }
 
@@ -192,6 +197,7 @@ export function MessageList({
               onContextMenu={onContextMenu}
               onReactionClick={onReactionClick}
               isOptimistic={item.message.id.startsWith("opt-")}
+              replyToMessage={item.replyToMessage}
             />
           );
         })}

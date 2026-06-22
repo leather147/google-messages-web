@@ -105,7 +105,8 @@ export async function fetchMessages(conversationId: string): Promise<Message[]> 
 
 export async function sendMessage(
   conversationId: string,
-  text: string
+  text: string,
+  replyTo?: string | null
 ): Promise<Message> {
   const id = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const now = new Date().toISOString();
@@ -119,7 +120,7 @@ export async function sendMessage(
     status: "sent",
     reactions: [],
     isDeleted: false,
-    replyTo: null,
+    replyTo: replyTo ?? null,
   };
 
   if (!_messages[conversationId]) _messages[conversationId] = [];

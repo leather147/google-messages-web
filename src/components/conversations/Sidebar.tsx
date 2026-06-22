@@ -5,15 +5,7 @@ import { ConversationList } from "./ConversationList";
 import { SearchOverlay } from "@/components/search/SearchOverlay";
 import { motion, AnimatePresence } from "framer-motion";
 
-const TABS = [
-  { key: "messages" as const, label: "Messages", icon: "chat_bubble_outline" },
-  { key: "pinned" as const, label: "Pinned", icon: "push_pin" },
-  { key: "archived" as const, label: "Archived", icon: "archive" },
-];
-
 export function Sidebar() {
-  const activeTab = useChatStore((s) => s.activeTab);
-  const setActiveTab = useChatStore((s) => s.setActiveTab);
   const searchOpen = useChatStore((s) => s.searchOpen);
   const setSearchOpen = useChatStore((s) => s.setSearchOpen);
   const setTheme = useChatStore((s) => s.setTheme);
@@ -126,52 +118,39 @@ export function Sidebar() {
         )}
       </AnimatePresence>
 
-      {/* Tab strip — md:hidden, visible on mobile */}
-      <div
-        className="flex md:hidden shrink-0 border-b"
-        style={{ borderColor: "var(--md-sys-color-outline-variant)" }}
-        role="tablist"
-        aria-label="Conversation categories"
-      >
-        {TABS.map((tab) => {
-          const isActive = activeTab === tab.key;
-          return (
-            <button
-              key={tab.key}
-              role="tab"
-              aria-selected={isActive}
-              className="flex-1 flex flex-col items-center gap-1 py-3 relative transition-colors"
-              style={{
-                color: isActive
-                  ? "var(--md-sys-color-primary)"
-                  : "var(--md-sys-color-on-surface-variant)",
-              }}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 20, fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
-                aria-hidden="true"
-              >
-                {tab.icon}
-              </span>
-              <span style={{ fontSize: 11, fontWeight: 500 }}>{tab.label}</span>
-              {isActive && (
-                <motion.div
-                  layoutId="tab-indicator"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                  style={{ background: "var(--md-sys-color-primary)" }}
-                  transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Conversations list — takes remaining space */}
-      <div className="flex-1 overflow-hidden flex flex-col">
+      {/* Conversations list — takes remaining space, FAB positioned inside */}
+      <div className="flex-1 overflow-hidden flex flex-col relative">
         <ConversationList />
+
+        {/* FAB: Start new chat */}
+        <div
+          className="absolute bottom-4 right-4 z-10"
+          aria-label="Start new chat"
+        >
+          <button
+            className="flex items-center gap-3 rounded-2xl px-4 h-14 elevation-3 transition-all hover:elevation-4 active:scale-95"
+            style={{
+              background: "var(--md-sys-color-primary-container)",
+              color: "var(--md-sys-color-on-primary-container)",
+              minWidth: 56,
+            }}
+            aria-label="Start new chat"
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: 22, fontVariationSettings: "'FILL' 1" }}
+              aria-hidden="true"
+            >
+              edit
+            </span>
+            <span
+              className="font-medium"
+              style={{ fontSize: 14, whiteSpace: "nowrap" }}
+            >
+              Start chat
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Search overlay */}
