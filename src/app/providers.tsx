@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useChatStore } from "@/store/useChatStore";
+import { ChunkErrorRecovery } from "@/components/providers/ChunkErrorRecovery";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,6 +60,7 @@ function ThemeInitializer() {
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
+      <ChunkErrorRecovery />
       <OfflineDetector />
       <ThemeInitializer />
       {children}
