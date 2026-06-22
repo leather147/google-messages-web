@@ -3,13 +3,16 @@
 import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useShallow } from "zustand/shallow";
+import { useQuery } from "@tanstack/react-query";
 import { useChatStore } from "@/store/useChatStore";
 import { Avatar } from "@/components/ui/Avatar";
 import { MessageList } from "./MessageList";
 import { MessageComposer } from "./MessageComposer";
 import { ContextMenu } from "./ContextMenu";
 import { ReactionPicker } from "./ReactionPicker";
-import type { Message, Conversation } from "@/types/global";
+import { fetchConversations } from "@/services/mockApi";
+import { idbGetAllConversations } from "@/lib/idb";
+import type { Message } from "@/types/global";
 
 const EMPTY_MESSAGES: Message[] = [];
 
@@ -17,33 +20,26 @@ interface ChatWindowProps {
   conversationId: string;
 }
 
-// Stable selector that extracts only the primitive fields we render.
-// Returns a plain object — useShallow does a shallow-equal comparison so
-// the reference only changes when a field actually changes.
-function selectConversationFields(conversationId: string) {
-  return (s: ReturnType<typeof useChatStore.getState>) => {
-    const c = s.conversations.find((conv) => conv.id === conversationId);
-    if (!c) return null;
-    return {
-      name: c.name,
-      initials: c.initials,
-      avatarColor: c.avatarColor,
-      avatar: c.avatar,
-      isGroup: c.isGroup,
-      phone: c.phone,
-    } satisfies Partial<Conversation>;
-  };
-}
-
 export function ChatWindow({ conversationId }: ChatWindowProps) {
-  // Stable state subscriptions ────────────────────────────────────────────
-  // useShallow ensures that array selectors return the same reference when the
-  // contents haven't changed, preventing React 19 strict-mode snapshot mismatches.
+  // Look up conversation metadata from the shared React Query cache — the
+  // same cache that ConversationList populates — so we always have fresh data
+  // without an extra network request.
+  const { data: conversations = [] } = useQuery({
+    queryKey: ["conversations"],
+    queryFn: async () => {
+      try {
+        return await fetchConversations();
+      } catch {
+        return idbGetAllConversations();
+      }
+    },
+    staleTime: Infinity, // reuse the cache already populated by ConversationList
+  });
+  const conversation = conversations.find((c) => c.id === conversationId) ?? null;
+
+  // Stable state subscriptions for messages ───────────────────────────────
   const messages = useChatStore(
     useShallow((s) => s.messages[conversationId] ?? EMPTY_MESSAGES)
-  );
-  const conversation = useChatStore(
-    useShallow(selectConversationFields(conversationId))
   );
 
   // UI-only local state ────────────────────────────────────────────────────
