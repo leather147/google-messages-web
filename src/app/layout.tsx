@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Roboto } from "next/font/google";
 import Script from "next/script";
+import { Providers } from "./providers";
+import { MWCLoader } from "@/components/MWCLoader";
 import "./globals.css";
 
 const roboto = Roboto({
@@ -64,7 +66,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="h-full overflow-hidden">{children}</body>
+      <body className="h-full overflow-hidden">
+          <MWCLoader />
+          <Providers>{children}</Providers>
+        </body>
     </html>
   );
 }

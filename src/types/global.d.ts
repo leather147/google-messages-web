@@ -1,4 +1,55 @@
 // ---------------------------------------------------------------------------
+// Data model types
+// ---------------------------------------------------------------------------
+
+export type MessageStatus = "sent" | "delivered" | "read";
+export type MessageDirection = "incoming" | "outgoing";
+
+export interface Reaction {
+  emoji: string;
+  count: number;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  text: string;
+  timestamp: string;
+  direction: MessageDirection;
+  status: MessageStatus;
+  reactions: Reaction[];
+  isDeleted: boolean;
+  replyTo: string | null;
+}
+
+export interface Conversation {
+  id: string;
+  name: string;
+  avatar: string | null;
+  avatarColor: string;
+  initials: string;
+  phone: string | null;
+  lastMessage: string;
+  updatedAt: string;
+  pinned: boolean;
+  archived: boolean;
+  unreadCount: number;
+  isGroup: boolean;
+  isSpam: boolean;
+  muted?: boolean;
+  typing?: boolean;
+}
+
+export interface SearchResult {
+  conversationId: string;
+  conversationName: string;
+  messageId: string | null;
+  text: string;
+  timestamp: string;
+  type: "conversation" | "message";
+}
+
+// ---------------------------------------------------------------------------
 // Material Web Component JSX declarations (React 19 custom-element support)
 // ---------------------------------------------------------------------------
 
