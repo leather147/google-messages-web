@@ -1,7 +1,25 @@
 {
   "name": "google-messages-web",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "description": "Google Messages Web UI clone built with Next.js 15, Material Design 3 Web Components, and modern realtime architecture (MVP + scalable messaging system).",
+  "keywords": [
+    "material",
+    "material design",
+    "design system",
+    "components",
+    "web components",
+    "lit"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/program-perfect/google-messages-web.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/program-perfect/google-messages-web/issues"
+  },
+  "homepage": "https://github.com/program-perfect/google-messages-web#readme",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
