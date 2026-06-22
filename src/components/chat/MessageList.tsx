@@ -11,7 +11,10 @@ import { DateSeparator } from "./DateSeparator";
 import { TypingIndicator } from "./TypingIndicator";
 import { MessageListSkeleton } from "@/components/ui/Skeleton";
 import { getDateKey, shouldGroupWithPrevious } from "@/lib/dateUtils";
+import { useShallow } from "zustand/shallow";
 import type { Message } from "@/types/global";
+
+const EMPTY_MESSAGES: Message[] = [];
 
 interface MessageListProps {
   conversationId: string;
@@ -28,9 +31,10 @@ export function MessageList({
   const containerRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
 
-  const storeMessages = useChatStore((s) => s.messages[conversationId] ?? []);
-  const typingConversationIds = useChatStore((s) => s.typingConversationIds);
-  const isTyping = typingConversationIds.has(conversationId);
+  const storeMessages = useChatStore(
+    useShallow((s) => s.messages[conversationId] ?? EMPTY_MESSAGES)
+  );
+  const isTyping = useChatStore((s) => s.typingConversationIds.has(conversationId));
 
   const PAGE_SIZE = 30;
 

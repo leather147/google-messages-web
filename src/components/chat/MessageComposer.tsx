@@ -6,8 +6,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useChatStore } from "@/store/useChatStore";
 import { sendMessage, simulateIncomingMessage } from "@/services/mockApi";
 import { idbPutMessages } from "@/lib/idb";
+import { useShallow } from "zustand/shallow";
 import type { Message } from "@/types/global";
 import { nanoid } from "@/lib/nanoid";
+
+const EMPTY_MESSAGES: Message[] = [];
 
 interface MessageComposerProps {
   conversationId: string;
@@ -19,11 +22,15 @@ export function MessageComposer({ conversationId }: MessageComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
 
-  const appendMessage = useChatStore((s) => s.appendMessage);
-  const setTyping = useChatStore((s) => s.setTyping);
+  // Actions via getState() — identity is stable so no snapshot loop risk.
+  const appendMessage = useChatStore.getState().appendMessage;
+  const setTyping = useChatStore.getState().setTyping;
+  const setReplyingTo = useChatStore.getState().setReplyingTo;
+  // State subscriptions
   const replyingToId = useChatStore((s) => s.replyingTo[conversationId] ?? null);
-  const setReplyingTo = useChatStore((s) => s.setReplyingTo);
-  const messages = useChatStore((s) => s.messages[conversationId] ?? []);
+  const messages = useChatStore(
+    useShallow((s) => s.messages[conversationId] ?? EMPTY_MESSAGES)
+  );
 
   const replyingToMessage: Message | null = replyingToId
     ? (messages.find((m) => m.id === replyingToId) ?? null)
