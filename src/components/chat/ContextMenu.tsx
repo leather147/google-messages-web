@@ -43,7 +43,7 @@ export function ContextMenu({ message, position, onClose, onReact, onReply }: Co
   const adjustedY = Math.min(position.y, window.innerHeight - menuHeight - 8);
 
   async function handleDelete() {
-    patchMessage(message.id, message.conversationId, { isDeleted: true });
+    useChatStore.getState().patchMessage(message.id, message.conversationId, { isDeleted: true });
     await deleteMessage(message.id, message.conversationId);
     queryClient.invalidateQueries({ queryKey: ["messages", message.conversationId] });
     onClose();
