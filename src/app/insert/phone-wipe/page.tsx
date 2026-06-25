@@ -174,7 +174,7 @@ export default function PhoneWipeInsertPage() {
           </div>
 
           <div className="space-y-4">
-            <div className="h-2 overflow-hidden rounded-full bg-white/8 ring-1 ring-white/10">
+            <div className="h-2 overflow-hidden rounded-full bg-white/[0.08] ring-1 ring-white/10">
               <div
                 className="h-full rounded-full bg-[linear-gradient(90deg,#38bdf8,#67e8f9,#ffffff)] shadow-[0_0_24px_rgba(103,232,249,0.65)] transition-[width] duration-150 ease-linear"
                 style={{ width: `${progress}%` }}
@@ -198,7 +198,7 @@ export default function PhoneWipeInsertPage() {
                   className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-[12px] transition-all duration-300 ${
                     done
                       ? "border-cyan-200/25 bg-cyan-300/10 text-cyan-100"
-                      : "border-white/8 bg-white/[0.035] text-slate-400"
+                      : "border-white/[0.08] bg-white/[0.035] text-slate-400"
                   }`}
                 >
                   <span>{group.name}</span>
@@ -208,7 +208,7 @@ export default function PhoneWipeInsertPage() {
             })}
           </div>
 
-          <div className="grid grid-cols-14 gap-1 opacity-70" aria-hidden="true">
+          <div className="grid grid-cols-[repeat(14,minmax(0,1fr))] gap-1 opacity-70" aria-hidden="true">
             {blocks.map((block) => {
               const lit = progress > (block / blocks.length) * 100;
               return (
@@ -232,7 +232,7 @@ export default function PhoneWipeInsertPage() {
           onClick={() => void startInsert()}
           className="absolute inset-0 z-20 grid place-items-center bg-[#05080d]/92 px-8 text-center backdrop-blur-md"
         >
-          <span className="max-w-[330px] rounded-[32px] border border-cyan-200/20 bg-white/8 px-7 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
+          <span className="max-w-[330px] rounded-[32px] border border-cyan-200/20 bg-white/[0.08] px-7 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
             <span className="block text-[11px] font-semibold uppercase tracking-[0.35em] text-cyan-200/70">
               fullscreen insert
             </span>
